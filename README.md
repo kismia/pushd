@@ -81,6 +81,6 @@ QUIT
         regex: ([^:]+)(?::\d+)?;(\d+)
         replacement: $1:$2
     metric_relabel_configs:
-      - regex: 'client_hash'
+      - regex: 'client_uuid'
         action: labeldrop
 ```

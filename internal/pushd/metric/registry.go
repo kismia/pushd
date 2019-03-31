@@ -34,11 +34,12 @@ func (r *Registry) Unregister(manager *Manager) {
 }
 
 func (r *Registry) Gather() ([]*dto.MetricFamily, error) {
+	flushQueueSnapshot := r.makeFlushQueueSnapshot()
+	managersSnapshot := r.makeManagersSnapshot()
+
 	metricFamilies := make([]*dto.MetricFamily, 0)
 
-	r.managersMux.RLock()
-
-	for manager := range r.managers {
+	for _, manager := range managersSnapshot {
 		managerMetrics, err := manager.Gather()
 		if err != nil {
 			logrus.Errorln("error on gather manager metrics", err)
@@ -47,18 +48,56 @@ func (r *Registry) Gather() ([]*dto.MetricFamily, error) {
 		}
 	}
 
-	r.managersMux.RUnlock()
+	r.unregister(flushQueueSnapshot)
 
+	return metricFamilies, nil
+}
+
+func (r *Registry) unregister(managers []*Manager) {
+	r.managersMux.Lock()
 	r.flushQueueMux.Lock()
 
-	for manager := range r.flushQueue {
+	for _, manager := range managers {
 		delete(r.flushQueue, manager)
 		delete(r.managers, manager)
 	}
 
+	r.managersMux.Unlock()
 	r.flushQueueMux.Unlock()
+}
 
-	return metricFamilies, nil
+func (r *Registry) makeFlushQueueSnapshot() []*Manager {
+	r.flushQueueMux.RLock()
+
+	snapshot := make([]*Manager, len(r.flushQueue))
+
+	i := 0
+
+	for manager := range r.flushQueue {
+		snapshot[i] = manager
+		i++
+	}
+
+	r.flushQueueMux.RUnlock()
+
+	return snapshot
+}
+
+func (r *Registry) makeManagersSnapshot() []*Manager {
+	r.managersMux.RLock()
+
+	snapshot := make([]*Manager, len(r.managers))
+
+	i := 0
+
+	for manager := range r.managers {
+		snapshot[i] = manager
+		i++
+	}
+
+	r.managersMux.RUnlock()
+
+	return snapshot
 }
 
 func appendMetrics(slice, elems []*dto.MetricFamily) []*dto.MetricFamily {
