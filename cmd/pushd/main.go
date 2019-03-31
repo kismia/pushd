@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 	"time"
 
@@ -22,6 +23,7 @@ type options struct {
 	address        string
 	metricsAddress string
 	metricsPath    string
+	threads        int
 }
 
 func main() {
@@ -37,6 +39,7 @@ func main() {
 	command.Flags().StringVar(&options.address, "address", ":6379", "Gateway server address")
 	command.Flags().StringVar(&options.metricsAddress, "metrics-address", ":9100", "Metrics server address")
 	command.Flags().StringVar(&options.metricsPath, "metrics-path", "/metrics", "Metrics path")
+	command.Flags().IntVar(&options.threads, "threads", 0, "Number of operating system threads")
 
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
@@ -44,6 +47,8 @@ func main() {
 }
 
 func (o *options) Run() error {
+	runtime.GOMAXPROCS(o.threads)
+
 	registry := metric.NewRegistry()
 
 	handler := api.NewHandler()
