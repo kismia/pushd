@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "pushd.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "pushd.name" . }}
+    helm.sh/chart: {{ include "pushd.chart" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    app.kubernetes.io/managed-by: {{ .Release.Service }}
+  annotations:
+{{ toYaml .Values.service.annotations | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: resp
+      protocol: TCP
+      name: resp
+  selector:
+    app.kubernetes.io/name: {{ include "pushd.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
