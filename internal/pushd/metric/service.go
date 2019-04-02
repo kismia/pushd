@@ -11,24 +11,24 @@ import (
 
 const clientUUIDLabel = "client_uuid"
 
-type Manager struct {
+type Service struct {
 	uuid       string
 	registry   *prometheus.Registry
 	collectors map[string]prometheus.Collector
 }
 
-func NewManager() *Manager {
-	return &Manager{
+func NewService() *Service {
+	return &Service{
 		uuid:       xid.New().String(),
 		registry:   prometheus.NewRegistry(),
 		collectors: make(map[string]prometheus.Collector),
 	}
 }
 
-func (m *Manager) Counter(name string, labels label.Labels) (prometheus.Counter, error) {
-	labels = append(labels, label.New(clientUUIDLabel, m.uuid))
+func (s *Service) Counter(name string, labels label.Labels) (prometheus.Counter, error) {
+	labels = append(labels, label.New(clientUUIDLabel, s.uuid))
 
-	collector, ok := m.collectors[name]
+	collector, ok := s.collectors[name]
 	if ok {
 		counterVec, ok := collector.(*prometheus.CounterVec)
 		if !ok {
@@ -42,19 +42,19 @@ func (m *Manager) Counter(name string, labels label.Labels) (prometheus.Counter,
 		Name: name,
 	}, labels.Names())
 
-	if err := m.registry.Register(counterVec); err != nil {
+	if err := s.registry.Register(counterVec); err != nil {
 		return nil, err
 	}
 
-	m.collectors[name] = counterVec
+	s.collectors[name] = counterVec
 
 	return counterVec.GetMetricWithLabelValues(labels.Values()...)
 }
 
-func (m *Manager) Gauge(name string, labels label.Labels) (prometheus.Gauge, error) {
-	labels = append(labels, label.New(clientUUIDLabel, m.uuid))
+func (s *Service) Gauge(name string, labels label.Labels) (prometheus.Gauge, error) {
+	labels = append(labels, label.New(clientUUIDLabel, s.uuid))
 
-	collector, ok := m.collectors[name]
+	collector, ok := s.collectors[name]
 	if ok {
 		gaugeVec, ok := collector.(*prometheus.GaugeVec)
 		if !ok {
@@ -68,19 +68,19 @@ func (m *Manager) Gauge(name string, labels label.Labels) (prometheus.Gauge, err
 		Name: name,
 	}, labels.Names())
 
-	if err := m.registry.Register(gaugeVec); err != nil {
+	if err := s.registry.Register(gaugeVec); err != nil {
 		return nil, err
 	}
 
-	m.collectors[name] = gaugeVec
+	s.collectors[name] = gaugeVec
 
 	return gaugeVec.GetMetricWithLabelValues(labels.Values()...)
 }
 
-func (m *Manager) Histogram(name string, labels label.Labels) (prometheus.Observer, error) {
-	labels = append(labels, label.New(clientUUIDLabel, m.uuid))
+func (s *Service) Histogram(name string, labels label.Labels) (prometheus.Observer, error) {
+	labels = append(labels, label.New(clientUUIDLabel, s.uuid))
 
-	collector, ok := m.collectors[name]
+	collector, ok := s.collectors[name]
 	if ok {
 		histogramVec, ok := collector.(*prometheus.HistogramVec)
 		if !ok {
@@ -94,19 +94,19 @@ func (m *Manager) Histogram(name string, labels label.Labels) (prometheus.Observ
 		Name: name,
 	}, labels.Names())
 
-	if err := m.registry.Register(histogramVec); err != nil {
+	if err := s.registry.Register(histogramVec); err != nil {
 		return nil, err
 	}
 
-	m.collectors[name] = histogramVec
+	s.collectors[name] = histogramVec
 
 	return histogramVec.GetMetricWithLabelValues(labels.Values()...)
 }
 
-func (m *Manager) Summary(name string, labels label.Labels) (prometheus.Observer, error) {
-	labels = append(labels, label.New(clientUUIDLabel, m.uuid))
+func (s *Service) Summary(name string, labels label.Labels) (prometheus.Observer, error) {
+	labels = append(labels, label.New(clientUUIDLabel, s.uuid))
 
-	collector, ok := m.collectors[name]
+	collector, ok := s.collectors[name]
 	if ok {
 		summaryVec, ok := collector.(*prometheus.SummaryVec)
 		if !ok {
@@ -120,15 +120,15 @@ func (m *Manager) Summary(name string, labels label.Labels) (prometheus.Observer
 		Name: name,
 	}, labels.Names())
 
-	if err := m.registry.Register(summaryVec); err != nil {
+	if err := s.registry.Register(summaryVec); err != nil {
 		return nil, err
 	}
 
-	m.collectors[name] = summaryVec
+	s.collectors[name] = summaryVec
 
 	return summaryVec.GetMetricWithLabelValues(labels.Values()...)
 }
 
-func (m *Manager) Gather() ([]*dto.MetricFamily, error) {
-	return m.registry.Gather()
+func (s *Service) Gather() ([]*dto.MetricFamily, error) {
+	return s.registry.Gather()
 }

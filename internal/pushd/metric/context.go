@@ -2,10 +2,10 @@ package metric
 
 import "github.com/tidwall/redcon"
 
-func ManagerWithContext(conn redcon.Conn, manager *Manager) {
+func ServiceWithContext(conn redcon.Conn, manager *Service) {
 	conn.SetContext(manager)
 }
 
-func ManagerFromContext(conn redcon.Conn) *Manager {
-	return conn.Context().(*Manager)
+func ServiceFromContext(conn redcon.Conn) *Service {
+	return conn.Context().(*Service)
 }

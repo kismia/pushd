@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-var ErrMissingLabel = errors.New("missing label/value")
+var ErrInconsistentLabel = errors.New("inconsistent label")
 
 type Label struct {
 	Name  string
@@ -22,7 +22,7 @@ type Labels []Label
 
 func FromByteSlices(args [][]byte) (Labels, error) {
 	if len(args)%2 != 0 {
-		return nil, ErrMissingLabel
+		return nil, ErrInconsistentLabel
 	}
 
 	set := make(Labels, int(len(args)/2))

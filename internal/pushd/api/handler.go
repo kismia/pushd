@@ -32,7 +32,7 @@ func (h *Handler) CounterAdd(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	counter, err := metric.ManagerFromContext(conn).Counter(string(cmd.Args[1]), labels)
+	counter, err := metric.ServiceFromContext(conn).Counter(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -55,7 +55,7 @@ func (h *Handler) CounterInc(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	counter, err := metric.ManagerFromContext(conn).Counter(string(cmd.Args[1]), labels)
+	counter, err := metric.ServiceFromContext(conn).Counter(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -84,7 +84,7 @@ func (h *Handler) GaugeSet(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	gauge, err := metric.ManagerFromContext(conn).Gauge(string(cmd.Args[1]), labels)
+	gauge, err := metric.ServiceFromContext(conn).Gauge(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -113,7 +113,7 @@ func (h *Handler) GaugeAdd(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	gauge, err := metric.ManagerFromContext(conn).Gauge(string(cmd.Args[1]), labels)
+	gauge, err := metric.ServiceFromContext(conn).Gauge(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -136,7 +136,7 @@ func (h *Handler) GaugeInc(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	gauge, err := metric.ManagerFromContext(conn).Gauge(string(cmd.Args[1]), labels)
+	gauge, err := metric.ServiceFromContext(conn).Gauge(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -159,7 +159,7 @@ func (h *Handler) GaugeDec(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	gauge, err := metric.ManagerFromContext(conn).Gauge(string(cmd.Args[1]), labels)
+	gauge, err := metric.ServiceFromContext(conn).Gauge(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -188,7 +188,7 @@ func (h *Handler) GaugeSub(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	gauge, err := metric.ManagerFromContext(conn).Gauge(string(cmd.Args[1]), labels)
+	gauge, err := metric.ServiceFromContext(conn).Gauge(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -217,7 +217,7 @@ func (h *Handler) HistogramObserve(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	observer, err := metric.ManagerFromContext(conn).Histogram(string(cmd.Args[1]), labels)
+	observer, err := metric.ServiceFromContext(conn).Histogram(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return
@@ -246,7 +246,7 @@ func (h *Handler) SummaryObserve(conn redcon.Conn, cmd redcon.Command) {
 		return
 	}
 
-	observer, err := metric.ManagerFromContext(conn).Summary(string(cmd.Args[1]), labels)
+	observer, err := metric.ServiceFromContext(conn).Summary(string(cmd.Args[1]), labels)
 	if err != nil {
 		conn.WriteError(err.Error())
 		return

@@ -13,6 +13,7 @@ import (
 	"github.com/kismia/pushd/internal/pkg/resp"
 	"github.com/kismia/pushd/internal/pushd/api"
 	"github.com/kismia/pushd/internal/pushd/metric"
+	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -37,8 +38,8 @@ func main() {
 	}
 
 	command.Flags().StringVar(&options.address, "address", ":6379", "Gateway server address")
-	command.Flags().StringVar(&options.metricsAddress, "metrics-address", ":9100", "Metrics server address")
-	command.Flags().StringVar(&options.metricsPath, "metrics-path", "/metrics", "Metrics path")
+	command.Flags().StringVar(&options.metricsAddress, "metrics-address", ":9100", "CommandCounter server address")
+	command.Flags().StringVar(&options.metricsPath, "metrics-path", "/metrics", "CommandCounter path")
 	command.Flags().IntVar(&options.threads, "threads", 0, "Number of operating system threads")
 
 	if err := command.Execute(); err != nil {
@@ -49,7 +50,16 @@ func main() {
 func (o *options) Run() error {
 	runtime.GOMAXPROCS(o.threads)
 
-	registry := metric.NewRegistry()
+	gathererPool := metric.NewGathererPool()
+
+	selfMetricsRegistry := prometheus.NewRegistry()
+
+	selfMetricsRegistry.MustRegister(
+		metric.TCPConnectedClientsTotal,
+		metric.TCPCommandsTotal,
+	)
+
+	gathererPool.Add(selfMetricsRegistry)
 
 	handler := api.NewHandler()
 	respServerMux := resp.NewServeMux()
@@ -65,18 +75,28 @@ func (o *options) Run() error {
 	respServerMux.HandleFunc("hist", handler.HistogramObserve)
 	respServerMux.HandleFunc("summ", handler.SummaryObserve)
 
-	respServer := redcon.NewServer(o.address, respServerMux.ServeRESP,
+	respServer := redcon.NewServer(
+		o.address,
+		func(conn redcon.Conn, cmd redcon.Command) {
+			metric.TCPCommandsTotal.Inc()
+
+			respServerMux.ServeRESP(conn, cmd)
+		},
 		func(conn redcon.Conn) bool {
-			manager := metric.NewManager()
+			metric.TCPConnectedClientsTotal.Inc()
 
-			registry.Register(manager)
+			metricService := metric.NewService()
 
-			metric.ManagerWithContext(conn, manager)
+			gathererPool.Add(metricService)
+
+			metric.ServiceWithContext(conn, metricService)
 
 			return true
 		},
 		func(conn redcon.Conn, err error) {
-			registry.Unregister(metric.ManagerFromContext(conn))
+			metric.TCPConnectedClientsTotal.Dec()
+
+			gathererPool.Flush(metric.ServiceFromContext(conn))
 			if err != nil {
 				logrus.Error(err)
 			}
@@ -84,7 +104,7 @@ func (o *options) Run() error {
 	)
 
 	httpServerMux := http.NewServeMux()
-	httpServerMux.Handle(o.metricsPath, promhttp.HandlerFor(registry, promhttp.HandlerOpts{}))
+	httpServerMux.Handle(o.metricsPath, promhttp.HandlerFor(gathererPool, promhttp.HandlerOpts{}))
 
 	httpServer := &http.Server{
 		Addr:    o.metricsAddress,
