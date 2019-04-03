@@ -63,6 +63,24 @@ $ redis-cli
 $ curl localhost:9100/metrics
 ```
 
+## Benchmarks
+```bash
+$ redis-benchmark -r 1000000 -n 1000000 CINC my_counter __rand_int__
+
+====== CINC my_counter __rand_int__ ======
+  1000000 requests completed in 11.13 seconds
+  50 parallel clients
+  3 bytes payload
+  keep alive: 1
+
+100.00% <= 1 milliseconds
+100.00% <= 1 milliseconds
+89847.26 requests per second
+
+```
+
+_Running on a MacBook Pro 15, 2018" 2.2 GHz Intel Core i7 using Go 1.12.1_
+
 ## Kubernetes integration
 
 #### Kubernetes Service annotations 
