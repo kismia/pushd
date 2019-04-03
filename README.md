@@ -65,17 +65,17 @@ $ curl localhost:9100/metrics
 
 ## Benchmarks
 ```bash
-$ redis-benchmark -r 1000000 -n 1000000 CINC my_counter __rand_int__
+$ redis-benchmark -r 1000000 -n 1000000 CADD my_counter __rand_int__
 
-====== CINC my_counter __rand_int__ ======
-  1000000 requests completed in 11.13 seconds
+====== CADD my_counter __rand_int__ ======
+  1000000 requests completed in 10.82 seconds
   50 parallel clients
   3 bytes payload
   keep alive: 1
 
+99.99% <= 1 milliseconds
 100.00% <= 1 milliseconds
-100.00% <= 1 milliseconds
-89847.26 requests per second
+92429.98 requests per second
 
 ```
 
