@@ -132,7 +132,6 @@ metadata:
 - Go: [redigo](https://github.com/gomodule/redigo) ([example code](https://github.com/tidwall/tile38/wiki/Go-example-(redigo)))
 - Haskell: [hedis](https://github.com/informatikr/hedis)
 - Java: [lettuce](https://github.com/mp911de/lettuce) ([example code](https://github.com/tidwall/tile38/wiki/Java-example-(lettuce)))
-- Node.js: [node-tile38](https://github.com/phulst/node-tile38) ([example code](https://github.com/tidwall/tile38/wiki/Node.js-example-(node-tile38)))
 - Node.js: [node_redis](https://github.com/NodeRedis/node_redis) ([example code](https://github.com/tidwall/tile38/wiki/Node.js-example-(node-redis)))
 - Perl: [perl-redis](https://github.com/PerlRedis/perl-redis)
 - PHP: [tinyredisclient](https://github.com/ptrofimov/tinyredisclient) ([example code](https://github.com/tidwall/tile38/wiki/PHP-example-(tinyredisclient)))
