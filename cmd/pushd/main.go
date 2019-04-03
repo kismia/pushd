@@ -37,10 +37,10 @@ func main() {
 		},
 	}
 
-	command.Flags().StringVar(&options.address, "address", ":6379", "Gateway server address")
-	command.Flags().StringVar(&options.metricsAddress, "metrics-address", ":9100", "CommandCounter server address")
-	command.Flags().StringVar(&options.metricsPath, "metrics-path", "/metrics", "CommandCounter path")
-	command.Flags().IntVar(&options.threads, "threads", 0, "Number of operating system threads")
+	command.Flags().StringVar(&options.address, "address", ":6379", "gateway server address")
+	command.Flags().StringVar(&options.metricsAddress, "metrics-address", ":9100", "metrics server address")
+	command.Flags().StringVar(&options.metricsPath, "metrics-path", "/metrics", "metrics path")
+	command.Flags().IntVar(&options.threads, "threads", 0, "number of operating system threads")
 
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
