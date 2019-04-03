@@ -22,16 +22,27 @@ spec:
         app.kubernetes.io/name: {{ include "pushd.name" . }}
         app.kubernetes.io/instance: {{ .Release.Name }}
     spec:
+      hostNetwork: {{ .Values.hostNetwork }}
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+        {{ if .Values.hostNetwork }}
+          env:
+            - name: HOST_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          args:
+            - --address=$(HOST_IP):{{ .Values.service.respPort }}
+            - --metrics-address=$(HOST_IP):{{ .Values.service.httpPort }}
+        {{ end }}
           ports:
             - name: resp
-              containerPort: 6379
+              containerPort: {{ .Values.service.respPort }}
               protocol: TCP
             - name: http
-              containerPort: 9100
+              containerPort: {{ .Values.service.httpPort }}
               protocol: TCP
           livenessProbe:
             tcpSocket:

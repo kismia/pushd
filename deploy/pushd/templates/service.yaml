@@ -12,10 +12,14 @@ metadata:
 spec:
   type: {{ .Values.service.type }}
   ports:
-    - port: {{ .Values.service.port }}
+    - port: {{ .Values.service.respPort }}
       targetPort: resp
       protocol: TCP
       name: resp
+    - port: {{ .Values.service.httpPort }}
+      targetPort: http
+      protocol: TCP
+      name: http
   selector:
     app.kubernetes.io/name: {{ include "pushd.name" . }}
     app.kubernetes.io/instance: {{ .Release.Name }}
