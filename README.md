@@ -9,12 +9,13 @@ Usage:
   pushd [flags]
 
 Flags:
-      --address string           gateway server address (default ":6379")
-  -h, --help                     help for pushd
-      --metrics-address string   metrics server address (default ":9100")
-      --metrics-path string      metrics path (default "/metrics")
-      --threads int              number of operating system threads
-
+      --address string            gateway server address (default ":6379")
+      --default-buckets strings   default histogram buckets (default [0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10])
+  -h, --help                      help for pushd
+      --metrics-address string    metrics server address (default ":9100")
+      --metrics-path string       metrics path (default "/metrics")
+      --profiling                 enable profiling
+      --threads int               number of operating system threads
 ```
 
 ## Getting Started

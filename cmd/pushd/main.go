@@ -4,15 +4,18 @@ import (
 	"context"
 	"log"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
 
+	"github.com/kismia/pushd/internal/pkg/promutil"
 	"github.com/kismia/pushd/internal/pkg/resp"
 	"github.com/kismia/pushd/internal/pushd/api"
 	"github.com/kismia/pushd/internal/pushd/metric"
+	"github.com/pkg/errors"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/sirupsen/logrus"
@@ -24,23 +27,33 @@ type options struct {
 	address        string
 	metricsAddress string
 	metricsPath    string
+	defaultBuckets []string
 	threads        int
+	profiling      bool
 }
 
 func main() {
-	options := options{}
+	opts := options{
+		address:        ":6379",
+		metricsAddress: ":9100",
+		metricsPath:    "/metrics",
+		defaultBuckets: promutil.BucketsToStrings(prometheus.DefBuckets),
+	}
+
 	command := &cobra.Command{
 		Use:   "pushd",
 		Short: "Prometheus push acceptor for ephemeral and batch jobs",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return options.Run()
+			return opts.Run()
 		},
 	}
 
-	command.Flags().StringVar(&options.address, "address", ":6379", "gateway server address")
-	command.Flags().StringVar(&options.metricsAddress, "metrics-address", ":9100", "metrics server address")
-	command.Flags().StringVar(&options.metricsPath, "metrics-path", "/metrics", "metrics path")
-	command.Flags().IntVar(&options.threads, "threads", 0, "number of operating system threads")
+	command.Flags().StringVar(&opts.address, "address", opts.address, "gateway server address")
+	command.Flags().StringVar(&opts.metricsAddress, "metrics-address", opts.metricsAddress, "metrics server address")
+	command.Flags().StringVar(&opts.metricsPath, "metrics-path", opts.metricsPath, "metrics path")
+	command.Flags().StringSliceVar(&opts.defaultBuckets, "default-buckets", opts.defaultBuckets, "default histogram buckets")
+	command.Flags().IntVar(&opts.threads, "threads", opts.threads, "number of operating system threads")
+	command.Flags().BoolVar(&opts.profiling, "profiling", opts.profiling, "enable profiling")
 
 	if err := command.Execute(); err != nil {
 		os.Exit(1)
@@ -49,6 +62,13 @@ func main() {
 
 func (o *options) Run() error {
 	runtime.GOMAXPROCS(o.threads)
+
+	defaultBuckets, err := promutil.StringsToBuckets(o.defaultBuckets)
+	if err != nil {
+		return errors.Wrap(err, "invalid default histogram buckets")
+	}
+
+	prometheus.DefBuckets = defaultBuckets
 
 	gathererPool := metric.NewGathererPool()
 
@@ -104,6 +124,20 @@ func (o *options) Run() error {
 	)
 
 	httpServerMux := http.NewServeMux()
+
+	if o.profiling {
+		httpServerMux.HandleFunc("/debug/pprof/", pprof.Index)
+		httpServerMux.HandleFunc("/debug/pprof/heap", pprof.Index)
+		httpServerMux.HandleFunc("/debug/pprof/mutex", pprof.Index)
+		httpServerMux.HandleFunc("/debug/pprof/goroutine", pprof.Index)
+		httpServerMux.HandleFunc("/debug/pprof/threadcreate", pprof.Index)
+		httpServerMux.HandleFunc("/debug/pprof/block", pprof.Index)
+		httpServerMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
+		httpServerMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
+		httpServerMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
+		httpServerMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
+	}
+
 	httpServerMux.Handle(o.metricsPath, promhttp.HandlerFor(gathererPool, promhttp.HandlerOpts{}))
 
 	httpServer := &http.Server{
