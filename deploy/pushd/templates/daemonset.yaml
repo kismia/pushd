@@ -33,10 +33,15 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: status.hostIP
+        {{ end }}
           args:
+        {{ if .Values.hostNetwork }}
             - --address=$(HOST_IP):{{ .Values.service.respPort }}
             - --metrics-address=$(HOST_IP):{{ .Values.service.httpPort }}
         {{ end }}
+        {{- range $arg := .Values.arguments }}
+            - {{ $arg }}
+        {{- end }}
           ports:
             - name: resp
               containerPort: {{ .Values.service.respPort }}

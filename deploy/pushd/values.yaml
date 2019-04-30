@@ -1,17 +1,11 @@
 image:
   repository: kismia/pushd
-  tag: version-0.2.0
+  tag: version-0.3.0
   pullPolicy: IfNotPresent
 
 nameOverride: ""
 fullnameOverride: ""
 
-# inject env to client pod
-# env:
-#   - name: PUSHD_HOST
-#     valueFrom:
-#       fieldRef:
-#         fieldPath: status.hostIP
 hostNetwork: true
 
 service:
@@ -21,6 +15,9 @@ service:
   annotations:
     prometheus.io/scrape: "pushd"
     prometheus.io/port: "20002"
+
+arguments: []
+#  - --default-buckets=0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10
 
 resources:
   limits:
