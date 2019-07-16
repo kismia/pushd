@@ -9,13 +9,15 @@ Usage:
   pushd [flags]
 
 Flags:
-      --address string            gateway server address (default ":6379")
-      --default-buckets strings   default histogram buckets (default [0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10])
-  -h, --help                      help for pushd
-      --metrics-address string    metrics server address (default ":9100")
-      --metrics-path string       metrics path (default "/metrics")
-      --profiling                 enable profiling
-      --threads int               number of operating system threads
+      --address string               gateway server address (default ":6379")
+      --default-buckets strings      default histogram buckets (default [0.005,0.01,0.025,0.05,0.1,0.25,0.5,1,2.5,5,10])
+  -h, --help                         help for pushd
+      --keep-alive                   sets whether the operating system should send keepalive messages on the connection (default true)
+      --keep-alive-period duration   sets period between keep alives (default 10s)
+      --metrics-address string       metrics server address (default ":9100")
+      --metrics-path string          metrics path (default "/metrics")
+      --profiling                    enable profiling
+      --threads int                  number of operating system threads
 ```
 
 ## Getting Started
@@ -58,6 +60,30 @@ $ redis-cli
 
 > QUIT
 ```
+
+### Connect from PHP (phpredis)
+```php
+
+$redis->connect('localhost', 6379);
+
+// Counter
+$redis->rawCommand("CADD", 'metric_name', 1,'label1', 'val1', 'label2', 'val2');
+$redis->rawCommand("CINC", 'metric_name','label1', 'val1', 'label2', 'val2');
+
+// Gauge
+$redis->rawCommand("GADD", 'metric_name', 1,'label1', 'val1', 'label2', 'val2');
+$redis->rawCommand("GSET", 'metric_name', 1, 'label1', 'val1', 'label2', 'val2');
+$redis->rawCommand("GSUB", 'metric_name', 1, 'label1', 'val1', 'label2', 'val2');
+$redis->rawCommand("GINC", 'metric_name','label1', 'val1', 'label2', 'val2');
+$redis->rawCommand("GDEC", 'metric_name','label1', 'val1', 'label2', 'val2');
+
+// Histogram
+$redis->rawCommand("HIST", 'metric_name', 1,'label1', 'val1', 'label2', 'val2');
+
+// Summary
+$redis->rawCommand("SUMM", 'metric_name', 1,'label1', 'val1', 'label2', 'val2');
+```
+
 
 ### Get metrics
 ```

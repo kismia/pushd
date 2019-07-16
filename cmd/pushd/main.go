@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"net"
 	"net/http"
 	"net/http/pprof"
 	"os"
@@ -24,21 +25,29 @@ import (
 )
 
 type options struct {
-	address        string
-	metricsAddress string
-	metricsPath    string
-	defaultBuckets []string
-	threads        int
-	profiling      bool
+	address         string
+	metricsAddress  string
+	metricsPath     string
+	defaultBuckets  []string
+	threads         int
+	keepAlive       bool
+	keepAlivePeriod time.Duration
+	profiling       bool
+}
+
+func newOptions() *options {
+	return &options{
+		address:         ":6379",
+		metricsAddress:  ":9100",
+		metricsPath:     "/metrics",
+		keepAlive:       true,
+		keepAlivePeriod: time.Second * 10,
+		defaultBuckets:  promutil.BucketsToStrings(prometheus.DefBuckets),
+	}
 }
 
 func main() {
-	opts := options{
-		address:        ":6379",
-		metricsAddress: ":9100",
-		metricsPath:    "/metrics",
-		defaultBuckets: promutil.BucketsToStrings(prometheus.DefBuckets),
-	}
+	opts := newOptions()
 
 	command := &cobra.Command{
 		Use:   "pushd",
@@ -53,6 +62,8 @@ func main() {
 	command.Flags().StringVar(&opts.metricsPath, "metrics-path", opts.metricsPath, "metrics path")
 	command.Flags().StringSliceVar(&opts.defaultBuckets, "default-buckets", opts.defaultBuckets, "default histogram buckets")
 	command.Flags().IntVar(&opts.threads, "threads", opts.threads, "number of operating system threads")
+	command.Flags().BoolVar(&opts.keepAlive, "keep-alive", opts.keepAlive, "sets whether the operating system should send keepalive messages on the connection")
+	command.Flags().DurationVar(&opts.keepAlivePeriod, "keep-alive-period", opts.keepAlivePeriod, "sets period between keep alives")
 	command.Flags().BoolVar(&opts.profiling, "profiling", opts.profiling, "enable profiling")
 
 	if err := command.Execute(); err != nil {
@@ -104,6 +115,12 @@ func (o *options) Run() error {
 		},
 		func(conn redcon.Conn) bool {
 			metric.TCPConnectedClientsTotal.Inc()
+
+			if o.keepAlive {
+				if err := enableKeepAlive(conn.NetConn().(*net.TCPConn), o.keepAlivePeriod); err != nil {
+					logrus.Errorln("keep alive enable failed", err)
+				}
+			}
 
 			metricService := metric.NewService()
 
@@ -177,4 +194,12 @@ func (o *options) Run() error {
 	defer cancel()
 
 	return httpServer.Shutdown(ctx)
+}
+
+func enableKeepAlive(conn *net.TCPConn, period time.Duration) error {
+	if err := conn.SetKeepAlive(true); err != nil {
+		return err
+	}
+
+	return conn.SetKeepAlivePeriod(period)
 }

@@ -6,7 +6,7 @@ COPY . /go/src/github.com/kismia/pushd
 
 WORKDIR /go/src/github.com/kismia/pushd
 
-RUN go build -o /pushd ./cmd/pushd
+RUN go build -mod=vendor -o /pushd ./cmd/pushd
 
 FROM alpine:3.9
 
